@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:old_growth_spruce_taiga",
+    {
+      "id": "#c:is_old_growth_spruce_taiga",
+      "required": false
+    }
+  ]
+}

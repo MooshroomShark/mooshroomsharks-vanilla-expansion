@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": "minecraft:emerald",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "P": "minecraft:poppy",
+    "R": "minecraft:rotten_flesh"
+  },
+  "pattern": [
+    "EPE",
+    "RNR",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:pillager_spawn_egg"
+  }
+}

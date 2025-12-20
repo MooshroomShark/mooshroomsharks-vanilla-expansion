@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": "minecraft:beacon",
+    "E": "minecraft:end_crystal",
+    "I": "minecraft:iron_bars",
+    "R": "minecraft:redstone",
+    "c": "minecraft:copper_ingot",
+    "g": "minecraft:gold_ingot"
+  },
+  "pattern": [
+    "cgc",
+    "IBI",
+    "RER"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:vault"
+  }
+}

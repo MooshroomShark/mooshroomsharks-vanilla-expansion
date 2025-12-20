@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:iron_bars",
+    "B": "minecraft:beacon",
+    "E": "minecraft:end_crystal"
+  },
+  "pattern": [
+    "#E#",
+    "#B#",
+    "#E#"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:spawner"
+  }
+}

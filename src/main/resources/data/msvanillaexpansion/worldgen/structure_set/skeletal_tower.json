@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "msvanillaexpansion:skeletal_tower",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 50,
+    "separation": 20,
+    "salt": 1289538672
+  }
+}

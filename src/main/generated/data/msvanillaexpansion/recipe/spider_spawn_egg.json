@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:string",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "S": "minecraft:spider_eye"
+  },
+  "pattern": [
+    "#S#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:spider_spawn_egg"
+  }
+}

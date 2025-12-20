@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:ender_pearl",
+    "E": "minecraft:ender_eye",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star"
+  },
+  "pattern": [
+    "#E#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:enderman_spawn_egg"
+  }
+}

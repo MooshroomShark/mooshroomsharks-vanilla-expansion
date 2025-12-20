@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "msvanillaexpansion:spruce_tavern",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 50,
+    "separation": 20,
+    "salt": 1246875467
+  }
+}

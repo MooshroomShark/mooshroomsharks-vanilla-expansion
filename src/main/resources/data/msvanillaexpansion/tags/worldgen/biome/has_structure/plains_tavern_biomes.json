@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:plains",
+    "minecraft:mushroom_fields",
+    {
+      "id": "#c:is_plains",
+      "required": false
+    }
+  ]
+}

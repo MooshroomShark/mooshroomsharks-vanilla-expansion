@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "msvanillaexpansion:giant_jack_o_lantern",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 80,
+    "separation": 50,
+    "salt": 1111678671
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:gunpowder",
+    "C": "minecraft:creeper_head",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star"
+  },
+  "pattern": [
+    "#C#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:creeper_spawn_egg"
+  }
+}

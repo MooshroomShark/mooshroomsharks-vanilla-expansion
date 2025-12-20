@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": "minecraft:beacon",
+    "E": "minecraft:end_crystal",
+    "I": "minecraft:iron_bars",
+    "R": "minecraft:redstone",
+    "c": "minecraft:copper_ingot"
+  },
+  "pattern": [
+    "cEc",
+    "IBI",
+    "RER"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:trial_spawner"
+  }
+}
