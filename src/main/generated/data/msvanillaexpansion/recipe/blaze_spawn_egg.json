@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:blaze_rod",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "Z": "minecraft:blaze_powder"
+  },
+  "pattern": [
+    "#Z#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:blaze_spawn_egg"
+  }
+}

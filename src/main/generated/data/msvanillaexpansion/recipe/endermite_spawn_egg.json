@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:popped_chorus_fruit",
+    "E": "minecraft:ender_eye",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star"
+  },
+  "pattern": [
+    "#E#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:endermite_spawn_egg"
+  }
+}

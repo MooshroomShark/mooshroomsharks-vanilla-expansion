@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:prismarine_shard",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "Z": "minecraft:wet_sponge"
+  },
+  "pattern": [
+    "#Z#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:guardian_spawn_egg"
+  }
+}

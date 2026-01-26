@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:cobweb",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "Z": "minecraft:bone_block"
+  },
+  "pattern": [
+    "#Z#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:ghast_spawn_egg"
+  }
+}

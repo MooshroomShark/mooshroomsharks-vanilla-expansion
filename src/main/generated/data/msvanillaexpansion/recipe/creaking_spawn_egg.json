@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:stick",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "Z": "minecraft:resin_clump"
+  },
+  "pattern": [
+    "#Z#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:creaking_spawn_egg"
+  }
+}

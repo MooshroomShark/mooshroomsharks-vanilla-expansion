@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:cobblestone",
+    "G": "minecraft:ghast_tear",
+    "N": "minecraft:nether_star",
+    "S": "minecraft:stone"
+  },
+  "pattern": [
+    "#S#",
+    "#N#",
+    "GGG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:silverfish_spawn_egg"
+  }
+}
