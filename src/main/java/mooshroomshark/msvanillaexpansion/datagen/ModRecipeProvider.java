@@ -277,6 +277,40 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                         .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
                         .offerTo(exporter);
 
+                createShaped(RecipeCategory.MISC, Items.ENDERMITE_SPAWN_EGG)
+                        .pattern("#E#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.POPPED_CHORUS_FRUIT)
+                        .input('E', Items.ENDER_EYE)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.MISC, Items.VINDICATOR_SPAWN_EGG)
+                        .pattern("EPE")
+                        .pattern("RNR")
+                        .pattern("GGG")
+                        .input('P', Items.IRON_AXE)
+                        .input('R', Items.ROTTEN_FLESH)
+                        .input('E', Items.EMERALD)
+                        .input('G', Items.GHAST_TEAR)
+                        .input('N', Items.NETHER_STAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.MISC, Items.GHAST_SPAWN_EGG)
+                        .pattern("#Z#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.COBWEB)
+                        .input('Z', Items.BONE_BLOCK)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
             }
         };
     }
