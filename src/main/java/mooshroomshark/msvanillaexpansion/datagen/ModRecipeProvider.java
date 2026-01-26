@@ -204,6 +204,59 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                         .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
                         .offerTo(exporter);
 
+                createShaped(RecipeCategory.MISC, Items.BLAZE_SPAWN_EGG)
+                        .pattern("#Z#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.BLAZE_ROD)
+                        .input('Z', Items.BLAZE_POWDER)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.MISC, Items.BREEZE_SPAWN_EGG)
+                        .pattern("#Z#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.BREEZE_ROD)
+                        .input('Z', Items.WIND_CHARGE)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.MISC, Items.CREAKING_SPAWN_EGG)
+                        .pattern("#Z#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.STICK)
+                        .input('Z', Items.RESIN_CLUMP)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.MISC, Items.GUARDIAN_SPAWN_EGG)
+                        .pattern("#Z#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.PRISMARINE_SHARD)
+                        .input('Z', Items.WET_SPONGE)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.BUILDING_BLOCKS, Blocks.INFESTED_COBBLESTONE)
+                        .pattern("###")
+                        .pattern("#G#")
+                        .pattern("###")
+                        .input('#', Items.COBBLESTONE)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
             }
         };
     }
