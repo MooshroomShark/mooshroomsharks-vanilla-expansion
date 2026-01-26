@@ -12,15 +12,17 @@ import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.TreeFeatureConfig;
 import net.minecraft.world.gen.feature.size.TwoLayersFeatureSize;
-import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
-import net.minecraft.world.gen.foliage.CherryFoliagePlacer;
+import net.minecraft.world.gen.foliage.*;
 import net.minecraft.world.gen.stateprovider.BlockStateProvider;
+import net.minecraft.world.gen.trunk.DarkOakTrunkPlacer;
 import net.minecraft.world.gen.trunk.ForkingTrunkPlacer;
+import net.minecraft.world.gen.trunk.GiantTrunkPlacer;
 import net.minecraft.world.gen.trunk.StraightTrunkPlacer;
 
 public class ModConfiguredFeatures {
     public static final RegistryKey<ConfiguredFeature<?, ?>> ALTERNATE_OAK_KEY = registerKey("alternateoak");
     public static final RegistryKey<ConfiguredFeature<?, ?>> FLOWER_FOREST_OAK_KEY = registerKey("flowerforestoak");
+    public static final RegistryKey<ConfiguredFeature<?, ?>> BIRCH_FOREST_OAK_KEY = registerKey("birchforestoak");
 
     public static void bootstrap(Registerable<ConfiguredFeature<?, ?>> context) {
 
@@ -38,6 +40,14 @@ public class ModConfiguredFeatures {
                 BlockStateProvider.of(Blocks.OAK_LEAVES),
                 new BlobFoliagePlacer(ConstantIntProvider.create(2), ConstantIntProvider.create(1), 3),
                 new TwoLayersFeatureSize(1, 0, 2)).build());
+
+        register(context, BIRCH_FOREST_OAK_KEY, Feature.TREE, new TreeFeatureConfig.Builder(
+                BlockStateProvider.of(Blocks.OAK_LOG),
+                new DarkOakTrunkPlacer(9, 4, 3),
+                BlockStateProvider.of(Blocks.OAK_LEAVES),
+                new DarkOakFoliagePlacer(ConstantIntProvider.create(0), ConstantIntProvider.create(0)),
+                new TwoLayersFeatureSize(2, 1, 4)).build());
+
     }
 
     public static RegistryKey<ConfiguredFeature<?, ?>> registerKey(String name) {
