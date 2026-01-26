@@ -257,6 +257,26 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                         .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
                         .offerTo(exporter);
 
+                createShaped(RecipeCategory.BUILDING_BLOCKS, Blocks.INFESTED_STONE)
+                        .pattern("###")
+                        .pattern("#G#")
+                        .pattern("###")
+                        .input('#', Items.STONE)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
+                createShaped(RecipeCategory.MISC, Items.SILVERFISH_SPAWN_EGG)
+                        .pattern("#S#")
+                        .pattern("#N#")
+                        .pattern("GGG")
+                        .input('#', Items.COBBLESTONE)
+                        .input('S', Items.STONE)
+                        .input('N', Items.NETHER_STAR)
+                        .input('G', Items.GHAST_TEAR)
+                        .criterion(hasItem(Items.GHAST_TEAR), conditionsFromItem(Items.GHAST_TEAR))
+                        .offerTo(exporter);
+
             }
         };
     }
