@@ -8,7 +8,7 @@ import net.minecraft.world.gen.GenerationStep;
 
 public class ModTreeGeneration {
     public static void generateTrees() {
-
+        // Alternate oak tree variants in different forest types
         BiomeModifications.addFeature(BiomeSelectors.includeByKey(BiomeKeys.FOREST),
                 GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.ALTERNATE_OAK_PLACED_KEY);
 
@@ -18,5 +18,27 @@ public class ModTreeGeneration {
         BiomeModifications.addFeature(BiomeSelectors.includeByKey(BiomeKeys.BIRCH_FOREST, BiomeKeys.OLD_GROWTH_BIRCH_FOREST),
                 GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.BIRCH_FOREST_OAK_PLACED_KEY);
 
+        // Bedrock Edition dead trees (oak logs without leaves) - very rare
+        BiomeModifications.addFeature(BiomeSelectors.includeByKey(
+                BiomeKeys.PLAINS,
+                BiomeKeys.SUNFLOWER_PLAINS,
+                BiomeKeys.FOREST,
+                BiomeKeys.FLOWER_FOREST,
+                BiomeKeys.BIRCH_FOREST,
+                BiomeKeys.OLD_GROWTH_BIRCH_FOREST,
+                BiomeKeys.DARK_FOREST,
+                BiomeKeys.TAIGA,
+                BiomeKeys.OLD_GROWTH_PINE_TAIGA,
+                BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA,
+                BiomeKeys.SNOWY_TAIGA,
+                BiomeKeys.SAVANNA,
+                BiomeKeys.WINDSWEPT_SAVANNA
+        ), GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.DEAD_TREE_PLACED_KEY);
+
+        // Bedrock Edition giant red mushrooms in swamps
+        BiomeModifications.addFeature(BiomeSelectors.includeByKey(
+                BiomeKeys.SWAMP,
+                BiomeKeys.MANGROVE_SWAMP
+        ), GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.SWAMP_GIANT_RED_MUSHROOM_PLACED_KEY);
     }
 }
