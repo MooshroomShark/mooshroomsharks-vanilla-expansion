@@ -8,19 +8,24 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.gen.feature.*;
-import net.minecraft.world.gen.placementmodifier.PlacementModifier;
+import net.minecraft.world.gen.placementmodifier.*;
 
 import java.util.List;
 
 public class ModPlacedFeatures {
+    // variant oak tree features
     public static final RegistryKey<PlacedFeature> ALTERNATE_OAK_PLACED_KEY = registerKey("alternateoak_placed");
     public static final RegistryKey<PlacedFeature> FLOWER_FOREST_OAK_PLACED_KEY = registerKey("flowerforestoak_placed");
     public static final RegistryKey<PlacedFeature> BIRCH_FOREST_OAK_PLACED_KEY = registerKey("birchforestoak_placed");
 
+    // Bedrock Edition features
+    public static final RegistryKey<PlacedFeature> DEAD_TREE_PLACED_KEY = registerKey("dead_tree_placed");
+    public static final RegistryKey<PlacedFeature> SWAMP_GIANT_RED_MUSHROOM_PLACED_KEY = registerKey("swamp_giant_red_mushroom_placed");
 
     public static void bootstrap(Registerable<PlacedFeature> context) {
         var configuredFeatureRegistryEntryLookup = context.getRegistryLookup(RegistryKeys.CONFIGURED_FEATURE);
 
+        // variant oak tree placements
         register(context, ALTERNATE_OAK_PLACED_KEY, configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.ALTERNATE_OAK_KEY),
                 VegetationPlacedFeatures.treeModifiersWithWouldSurvive(
                         PlacedFeatures.createCountExtraModifier(2, 0.1f, 2), Blocks.OAK_SAPLING));
@@ -33,6 +38,24 @@ public class ModPlacedFeatures {
                 VegetationPlacedFeatures.treeModifiersWithWouldSurvive(
                         PlacedFeatures.createCountExtraModifier(1, 0.01f, 3), Blocks.OAK_SAPLING));
 
+        // New dead tree placement - very rare (1 in 500 chunks) to match Bedrock Edition
+        register(context, DEAD_TREE_PLACED_KEY,
+                configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.DEAD_TREE_KEY),
+                RarityFilterPlacementModifier.of(500),          // 1 in 500 chunks
+                SquarePlacementModifier.of(),                   // Random XZ within chunk
+                PlacedFeatures.MOTION_BLOCKING_HEIGHTMAP,       // Place on ground surface
+                BiomePlacementModifier.of()                     // Only in registered biomes
+        );
+
+        // New giant red mushroom placement - moderately rare (1 in 50 chunks) to match Bedrock Edition
+        register(context, SWAMP_GIANT_RED_MUSHROOM_PLACED_KEY,
+                configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.SWAMP_GIANT_RED_MUSHROOM_KEY),
+                CountPlacementModifier.of(1),                   // 1 attempt per chunk
+                RarityFilterPlacementModifier.of(50),           // 1 in 50 chunks
+                SquarePlacementModifier.of(),                   // Random XZ within chunk
+                PlacedFeatures.MOTION_BLOCKING_HEIGHTMAP,       // Place on ground surface
+                BiomePlacementModifier.of()                     // Only in registered biomes
+        );
     }
 
     public static RegistryKey<PlacedFeature> registerKey(String name) {

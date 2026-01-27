@@ -1,6 +1,7 @@
 package mooshroomshark.msvanillaexpansion;
 
-import mooshroomshark.msvanillaexpansion.entities.WolfFixConfig;
+import mooshroomshark.msvanillaexpansion.entities.PetProtectionHandler;
+import mooshroomshark.msvanillaexpansion.entities.PetChunkLoadingHandler;
 import mooshroomshark.msvanillaexpansion.world.gen.ModWorldGeneration;
 import net.fabricmc.api.ModInitializer;
 
@@ -13,9 +14,17 @@ public class MooshroomSharksVanillaExpansion implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-        // Register configuration
-        WolfFixConfig.init();
-        // Register world generation
+        LOGGER.info("Initializing MooshroomShark's Vanilla Expansion");
+
+        // Register pet protection (prevents owners from harming pets unless sneaking)
+        PetProtectionHandler.register();
+
+        // Register pet chunk loading (keeps chunks loaded for non-sitting pets)
+        PetChunkLoadingHandler.register();
+
+        // Register world generation (dead trees and swamp mushrooms)
         ModWorldGeneration.generateModWorldGeneration();
+
+        LOGGER.info("MooshroomShark's Vanilla Expansion initialized successfully!");
 	}
 }
