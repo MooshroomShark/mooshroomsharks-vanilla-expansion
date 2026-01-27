@@ -1,5 +1,6 @@
 package mooshroomshark.msvanillaexpansion;
 
+import mooshroomshark.msvanillaexpansion.entities.WolfFixConfig;
 import mooshroomshark.msvanillaexpansion.world.gen.ModWorldGeneration;
 import net.fabricmc.api.ModInitializer;
 
@@ -12,6 +13,9 @@ public class MooshroomSharksVanillaExpansion implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+        // Register configuration
+        WolfFixConfig.init();
+        // Register world generation
         ModWorldGeneration.generateModWorldGeneration();
 	}
 }
