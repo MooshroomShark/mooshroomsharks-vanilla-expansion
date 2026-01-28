@@ -2,37 +2,34 @@ package mooshroomshark.msvanillaexpansion.entities;
 
 import mooshroomshark.msvanillaexpansion.MooshroomSharksVanillaExpansion;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.block.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.ParrotEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.WolfEntity;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Handles chunk loading for non-sitting tamed pets to ensure they can teleport to their owner.
- * This prevents pets from getting stuck in unloaded chunks when the player travels far away.
- */
 public class PetChunkLoadingHandler {
 
-    // Track chunks that need to stay loaded for pets
     private static final Map<ChunkPos, Integer> petChunkTickets = new HashMap<>();
-
-    // Track failed teleport attempts to prevent log spam
     private static final Map<Integer, Long> failedTeleportCooldowns = new HashMap<>();
     private static final long TELEPORT_RETRY_COOLDOWN = 100; // 5 seconds (100 ticks)
 
-    // Custom chunk ticket type with 100 tick (5 second) lifetime
-    private static final ChunkTicketType PET_TICKET =
-            new ChunkTicketType(100L, 100);
+    // Reduced teleport distance threshold - teleport if more than 32 blocks away
+    private static final double TELEPORT_DISTANCE_SQUARED = 1024.0; // 32 blocks squared
+    private static final double LOAD_CHUNK_DISTANCE_SQUARED = 256.0; // 16 blocks squared
+
+    // Use the same approach as in your original working code
+    private static final ChunkTicketType PET_TICKET = new ChunkTicketType(100L, 100);
 
     public static void register() {
-        // Register server tick event to manage pet chunk loading
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             for (ServerWorld world : server.getWorlds()) {
                 handlePetChunkLoading(world);
@@ -42,152 +39,149 @@ public class PetChunkLoadingHandler {
     }
 
     private static void handlePetChunkLoading(ServerWorld world) {
-        // Clear old tickets from previous tick
-        petChunkTickets.clear();
+        // Track which chunks we're keeping loaded this tick
+        Map<ChunkPos, Integer> currentTickTickets = new HashMap<>();
 
         int petsFound = 0;
         int petsLoadedChunks = 0;
         int petsTeleported = 0;
 
-        // Find all tamed pets that are not sitting and their owner is not nearby
+        // Collect pets first to avoid modifying collection while iterating
+        List<Entity> petsToProcess = new ArrayList<>();
         for (Entity entity : world.iterateEntities()) {
             if (entity instanceof TameableEntity tameable) {
-                // Only process wolves, cats, and parrots
                 if (entity instanceof WolfEntity || entity instanceof CatEntity || entity instanceof ParrotEntity) {
-                    petsFound++;
-
-                    // Check if pet is tamed, not sitting, and has an owner
                     if (tameable.isTamed() && !tameable.isSitting() && tameable.getOwner() != null) {
-                        double distanceSquared = tameable.squaredDistanceTo(tameable.getOwner());
-                        double distance = Math.sqrt(distanceSquared);
+                        petsToProcess.add(entity);
+                    }
+                }
+            }
+        }
 
-                        // Check if we have a pending retry for this pet
-                        int petId = entity.getId();
-                        long currentTick = world.getTime();
-                        Long lastFailedAttempt = failedTeleportCooldowns.get(petId);
-                        boolean hasPendingRetry = lastFailedAttempt != null;
+        // Now process the collected pets
+        for (Entity entity : petsToProcess) {
+            TameableEntity tameable = (TameableEntity) entity;
+            petsFound++;
 
-                        // Check if owner is in a different dimension or far away (>12 blocks) OR has pending retry
-                        if (tameable.getOwner().getEntityWorld() != world ||
-                                distanceSquared > 144.0 || hasPendingRetry) {
+            double distanceSquared = tameable.squaredDistanceTo(tameable.getOwner());
+            double distance = Math.sqrt(distanceSquared);
 
-                            if (hasPendingRetry) {
-                                MooshroomSharksVanillaExpansion.LOGGER.info(
-                                        "{} has pending retry, distance: {} blocks (distanceSquared: {})",
-                                        entity.getType().getName().getString(),
-                                        (int) distance,
-                                        distanceSquared
-                                );
-                            }
+            int petId = entity.getId();
+            long currentTick = world.getTime();
+            Long lastFailedAttempt = failedTeleportCooldowns.get(petId);
+            boolean hasPendingRetry = lastFailedAttempt != null;
 
-                            // Get the chunk position of the pet
-                            ChunkPos chunkPos = new ChunkPos(entity.getBlockPos());
+            // Always load chunk if pet is far from owner (more than 16 blocks)
+            if (tameable.getOwner().getEntityWorld() != world ||
+                    distanceSquared > LOAD_CHUNK_DISTANCE_SQUARED || hasPendingRetry) {
 
-                            // Track this chunk (count multiple pets in same chunk)
-                            petChunkTickets.put(chunkPos, petChunkTickets.getOrDefault(chunkPos, 0) + 1);
+                ChunkPos chunkPos = new ChunkPos(entity.getBlockPos());
+                int ticketCount = currentTickTickets.getOrDefault(chunkPos, 0) + 1;
+                currentTickTickets.put(chunkPos, ticketCount);
 
-                            // Add chunk ticket to keep it loaded
-                            // Level 2 means the chunk and adjacent chunks stay loaded
-                            world.getChunkManager().addTicket(PET_TICKET, chunkPos, 2);
+                // Only add ticket if we haven't already for this chunk this tick
+                if (ticketCount == 1) {
+                    // Use the correct addTicket method for 1.21.11
+                    world.getChunkManager().addTicket(PET_TICKET, chunkPos, 2);
+                }
+                petsLoadedChunks++;
 
-                            petsLoadedChunks++;
+                // Try to teleport if very far (more than 32 blocks) or has pending retry
+                if (distanceSquared > TELEPORT_DISTANCE_SQUARED || hasPendingRetry) {
+                    if (lastFailedAttempt == null || (currentTick - lastFailedAttempt) >= TELEPORT_RETRY_COOLDOWN) {
 
-                            // If pet is beyond vanilla teleport range (~192 blocks) OR has a pending retry
-                            if (distanceSquared > 36864.0 || hasPendingRetry) { // 192 blocks squared
-                                // Only attempt teleport if not on cooldown or cooldown expired
-                                if (lastFailedAttempt == null || (currentTick - lastFailedAttempt) >= TELEPORT_RETRY_COOLDOWN) {
-                                    // Find a safe location near the owner
-                                    double targetX = tameable.getOwner().getX();
-                                    double targetY = tameable.getOwner().getY();
-                                    double targetZ = tameable.getOwner().getZ();
+                        double targetX = tameable.getOwner().getX();
+                        double targetY = tameable.getOwner().getY();
+                        double targetZ = tameable.getOwner().getZ();
 
-                                    // Try to find a safe spot within 3 blocks of the owner
-                                    net.minecraft.util.math.BlockPos safePos = findSafeTeleportLocation(world, targetX, targetY, targetZ);
+                        BlockPos safePos = findSafeTeleportLocation(world, targetX, targetY, targetZ);
 
-                                    if (safePos != null) {
-                                        // Teleport pet to safe position
-                                        entity.teleport(
-                                                world,
-                                                safePos.getX() + 0.5,
-                                                safePos.getY(),
-                                                safePos.getZ() + 0.5,
-                                                java.util.Set.of(),
-                                                entity.getYaw(),
-                                                entity.getPitch(),
-                                                false
-                                        );
-                                        petsTeleported++;
+                        if (safePos != null) {
+                            // Remove from failed attempts
+                            failedTeleportCooldowns.remove(petId);
 
-                                        // Remove from cooldown on success
-                                        failedTeleportCooldowns.remove(petId);
+                            // Teleport the pet
+                            entity.teleport(
+                                    world,
+                                    safePos.getX() + 0.5,
+                                    safePos.getY(),
+                                    safePos.getZ() + 0.5,
+                                    java.util.Set.of(),
+                                    entity.getYaw(),
+                                    entity.getPitch(),
+                                    false
+                            );
+                            petsTeleported++;
 
-                                        MooshroomSharksVanillaExpansion.LOGGER.info(
-                                                "Force teleported {} from {} blocks away to owner at safe location {}",
-                                                entity.getType().getName().getString(),
-                                                (int) distance,
-                                                safePos
-                                        );
-                                    } else {
-                                        // Put on cooldown and log warning
-                                        failedTeleportCooldowns.put(petId, currentTick);
+                            MooshroomSharksVanillaExpansion.LOGGER.info(
+                                    "Teleported {} from {} blocks away to owner at safe location {}",
+                                    entity.getType().getName().getString(),
+                                    (int) distance,
+                                    safePos
+                            );
+                        } else {
+                            // Record failed attempt with current time
+                            failedTeleportCooldowns.put(petId, currentTick);
 
-                                        MooshroomSharksVanillaExpansion.LOGGER.warn(
-                                                "Could not find safe teleport location for {} near owner at ({}, {}, {}). Will retry in 5 seconds.",
-                                                entity.getType().getName().getString(),
-                                                (int) targetX, (int) targetY, (int) targetZ
-                                        );
-                                    }
-                                } else {
-                                    // Still on cooldown - log INFO message every 20 ticks (1 second)
-                                    if ((currentTick - lastFailedAttempt) % 20 == 0) {
-                                        long ticksRemaining = TELEPORT_RETRY_COOLDOWN - (currentTick - lastFailedAttempt);
-                                        MooshroomSharksVanillaExpansion.LOGGER.info(
-                                                "{} at {} blocks away, waiting {} ticks before retry teleport attempt (pending retry active)",
-                                                entity.getType().getName().getString(),
-                                                (int) distance,
-                                                ticksRemaining
-                                        );
-                                    }
-                                }
-                            }
+                            MooshroomSharksVanillaExpansion.LOGGER.warn(
+                                    "Could not find safe teleport location for {} near owner at ({}, {}, {}). Will retry in {} seconds.",
+                                    entity.getType().getName().getString(),
+                                    (int) targetX, (int) targetY, (int) targetZ,
+                                    TELEPORT_RETRY_COOLDOWN / 20
+                            );
+                        }
+                    } else {
+                        // Still on cooldown
+                        if ((currentTick - lastFailedAttempt) % 20 == 0) {
+                            long ticksRemaining = TELEPORT_RETRY_COOLDOWN - (currentTick - lastFailedAttempt);
+                            long secondsRemaining = ticksRemaining / 20;
+                            MooshroomSharksVanillaExpansion.LOGGER.debug(
+                                    "{} at {} blocks away, waiting {} seconds before retry teleport",
+                                    entity.getType().getName().getString(),
+                                    (int) distance,
+                                    secondsRemaining
+                            );
                         }
                     }
                 }
             }
         }
 
-        if (petsLoadedChunks > 0 && world.getTime() % 20 == 0) { // Log every second to reduce spam
-            MooshroomSharksVanillaExpansion.LOGGER.info(
-                    "Keeping {} chunks loaded for {} pets (found {} total pets, force teleported {})",
+        // Update the global map with current tick's tickets
+        petChunkTickets.clear();
+        petChunkTickets.putAll(currentTickTickets);
+
+        // Log status every 5 seconds (debug only)
+        if (petsLoadedChunks > 0 && world.getTime() % 100 == 0) {
+            MooshroomSharksVanillaExpansion.LOGGER.debug(
+                    "Keeping {} chunks loaded for {} pets (found {} total pets, teleported {} this tick)",
                     petChunkTickets.size(), petsLoadedChunks, petsFound, petsTeleported
             );
         }
     }
 
-    /**
-     * Finds a safe location to teleport a pet near the target coordinates.
-     * Checks for solid ground, no suffocation, no lava/fire/water, and reasonable fall distance.
-     *
-     * @param world The world to search in
-     * @param x Target X coordinate
-     * @param y Target Y coordinate
-     * @param z Target Z coordinate
-     * @return A safe BlockPos, or null if no safe location found
-     */
-    private static net.minecraft.util.math.BlockPos findSafeTeleportLocation(ServerWorld world, double x, double y, double z) {
-        net.minecraft.util.math.BlockPos targetPos = net.minecraft.util.math.BlockPos.ofFloored(x, y, z);
+    private static BlockPos findSafeTeleportLocation(ServerWorld world, double x, double y, double z) {
+        BlockPos targetPos = BlockPos.ofFloored(x, y, z);
 
-        // First, try the exact owner position
+        // STRATEGY 1: Owner's exact position (if safe)
         if (isSafeTeleportLocation(world, targetPos)) {
             return targetPos;
         }
 
-        // Search in a 5x5x5 area around the owner
-        for (int xOffset = -2; xOffset <= 2; xOffset++) {
-            for (int zOffset = -2; zOffset <= 2; zOffset++) {
-                for (int yOffset = -2; yOffset <= 2; yOffset++) {
-                    net.minecraft.util.math.BlockPos checkPos = targetPos.add(xOffset, yOffset, zOffset);
+        // STRATEGY 2: Directly above owner (for water/swimming)
+        for (int yOffset = 1; yOffset <= 4; yOffset++) {
+            BlockPos checkPos = targetPos.add(0, yOffset, 0);
+            if (isSafeTeleportLocation(world, checkPos)) {
+                return checkPos;
+            }
+        }
 
+        // STRATEGY 3: Horizontal search at same Y level
+        for (int radius = 1; radius <= 6; radius++) {
+            for (int xOffset = -radius; xOffset <= radius; xOffset++) {
+                for (int zOffset = -radius; zOffset <= radius; zOffset++) {
+                    // Check same Y level first
+                    BlockPos checkPos = targetPos.add(xOffset, 0, zOffset);
                     if (isSafeTeleportLocation(world, checkPos)) {
                         return checkPos;
                     }
@@ -195,91 +189,123 @@ public class PetChunkLoadingHandler {
             }
         }
 
-        // If still no safe spot, try to find solid ground below the owner (up to 10 blocks down)
-        for (int i = 0; i < 10; i++) {
-            net.minecraft.util.math.BlockPos downPos = targetPos.down(i);
-            if (isSafeTeleportLocation(world, downPos)) {
-                return downPos;
+        // STRATEGY 4: 3D search around player
+        for (int radius = 1; radius <= 4; radius++) {
+            for (int xOffset = -radius; xOffset <= radius; xOffset++) {
+                for (int yOffset = -2; yOffset <= 4; yOffset++) {
+                    for (int zOffset = -radius; zOffset <= radius; zOffset++) {
+                        BlockPos checkPos = targetPos.add(xOffset, yOffset, zOffset);
+                        if (isSafeTeleportLocation(world, checkPos)) {
+                            return checkPos;
+                        }
+                    }
+                }
             }
         }
 
-        // No safe location found
+        // STRATEGY 5: Last resort - find highest safe ground above
+        for (int yOffset = 1; yOffset <= 20; yOffset++) {
+            BlockPos checkPos = targetPos.add(0, yOffset, 0);
+            if (isSafeTeleportLocation(world, checkPos)) {
+                return checkPos;
+            }
+        }
+
         return null;
     }
 
-    /**
-     * Checks if a location is safe for a pet to teleport to.
-     *
-     * @param world The world
-     * @param pos The position to check
-     * @return true if safe, false otherwise
-     */
-    private static boolean isSafeTeleportLocation(ServerWorld world, net.minecraft.util.math.BlockPos pos) {
-        // Check the block at the position (where pet's feet will be)
-        net.minecraft.block.BlockState groundState = world.getBlockState(pos);
+    private static boolean isSafeTeleportLocation(ServerWorld world, BlockPos pos) {
+        // Minecraft 1.21.11 world bounds
+        int minY = -64;
+        int maxY = 320;
 
-        // Check the block above (where pet's body will be)
-        net.minecraft.block.BlockState bodyState = world.getBlockState(pos.up());
-
-        // Check the block 2 above (for tall pets like wolves)
-        net.minecraft.block.BlockState headState = world.getBlockState(pos.up(2));
-
-        // The ground must be solid (not air, not liquid)
-        if (!groundState.isSolidBlock(world, pos)) {
+        // Don't teleport into void or above world limit
+        if (pos.getY() < minY || pos.getY() >= maxY) {
             return false;
         }
 
-        // Ground must not be waterlogged or have water
-        if (!groundState.getFluidState().isEmpty()) {
+        BlockPos groundPos = pos.down();
+        BlockPos bodyPos = pos;
+        BlockPos headPos = pos.up();
+
+        // Check if ground position is within world bounds
+        if (groundPos.getY() < minY) {
             return false;
         }
 
-        // The body space must be passable (air or non-solid) AND not water
-        if (bodyState.isSolidBlock(world, pos.up()) || !bodyState.getFluidState().isEmpty()) {
-            return false; // Would suffocate or be in water
+        BlockState groundState = world.getBlockState(groundPos);
+        BlockState bodyState = world.getBlockState(bodyPos);
+        BlockState headState = world.getBlockState(headPos);
+
+        // ===== GROUND CHECK =====
+        // Ground must support the pet
+        boolean groundIsSolid = groundState.isSolidBlock(world, groundPos);
+        boolean groundIsWater = groundState.getFluidState().getFluid() == Fluids.WATER ||
+                groundState.getFluidState().getFluid() == Fluids.FLOWING_WATER;
+
+        // Ice is solid but has fluid properties
+        boolean groundIsIce = groundState.isOf(net.minecraft.block.Blocks.ICE) ||
+                groundState.isOf(net.minecraft.block.Blocks.PACKED_ICE) ||
+                groundState.isOf(net.minecraft.block.Blocks.BLUE_ICE) ||
+                groundState.isOf(net.minecraft.block.Blocks.FROSTED_ICE);
+
+        if (!groundIsSolid && !groundIsWater && !groundIsIce) {
+            // Allow some other blocks that pets can stand on
+            if (!groundState.isOf(net.minecraft.block.Blocks.LILY_PAD) &&
+                    !(groundState.getBlock() instanceof LeavesBlock)) {
+                return false;
+            }
         }
 
-        // The head space should be passable AND not water
-        if (headState.isSolidBlock(world, pos.up(2)) || !headState.getFluidState().isEmpty()) {
-            return false; // Would suffocate or head in water
+        // ===== BODY SPACE CHECK =====
+        // Body space must be clear
+        boolean bodyIsAir = bodyState.isAir();
+        boolean bodyIsReplaceable = bodyState.isReplaceable();
+        boolean bodyIsWater = bodyState.getFluidState().getFluid() == Fluids.WATER ||
+                bodyState.getFluidState().getFluid() == Fluids.FLOWING_WATER;
+
+        if (!bodyIsAir && !bodyIsReplaceable && !bodyIsWater) {
+            return false;
         }
 
-        // Check for dangerous blocks
+        // ===== HEAD SPACE CHECK =====
+        // Head space must be clear
+        boolean headIsAir = headState.isAir();
+        boolean headIsReplaceable = headState.isReplaceable();
+        boolean headIsWater = headState.getFluidState().getFluid() == Fluids.WATER ||
+                headState.getFluidState().getFluid() == Fluids.FLOWING_WATER;
+
+        if (!headIsAir && !headIsReplaceable && !headIsWater) {
+            return false;
+        }
+
+        // ===== DANGEROUS BLOCKS CHECK =====
         if (isDangerousBlock(groundState) || isDangerousBlock(bodyState) || isDangerousBlock(headState)) {
             return false;
         }
 
-        // Check that there's not a huge fall below (pets take fall damage)
-        int fallDistance = 0;
-        for (int i = 1; i <= 10; i++) {
-            net.minecraft.block.BlockState belowState = world.getBlockState(pos.down(i));
-            if (belowState.isSolidBlock(world, pos.down(i))) {
-                break;
-            }
-            fallDistance++;
-        }
-
-        // If fall distance is more than 3 blocks, it's not safe
-        if (fallDistance > 3) {
+        // ===== FLUID CHECKS =====
+        // Allow water but not lava
+        if (groundState.getFluidState().isOf(Fluids.LAVA) ||
+                bodyState.getFluidState().isOf(Fluids.LAVA) ||
+                headState.getFluidState().isOf(Fluids.LAVA)) {
             return false;
         }
 
         return true;
     }
 
-    /**
-     * Checks if a block is dangerous for pets (lava, fire, cactus, etc.)
-     */
-    private static boolean isDangerousBlock(net.minecraft.block.BlockState state) {
-        net.minecraft.block.Block block = state.getBlock();
+    private static boolean isDangerousBlock(BlockState state) {
+        var block = state.getBlock();
 
-        return block instanceof net.minecraft.block.AbstractFireBlock ||
-                block instanceof net.minecraft.block.CampfireBlock ||
-                block instanceof net.minecraft.block.MagmaBlock ||
-                block instanceof net.minecraft.block.CactusBlock ||
-                block instanceof net.minecraft.block.SweetBerryBushBlock ||
-                block instanceof net.minecraft.block.WitherRoseBlock ||
+        return block instanceof AbstractFireBlock ||
+                block instanceof CampfireBlock ||
+                block instanceof MagmaBlock ||
+                block instanceof CactusBlock ||
+                block instanceof SweetBerryBushBlock ||
+                block instanceof WitherRoseBlock ||
                 state.getBlock() == net.minecraft.block.Blocks.LAVA ||
-                state.getBlock() == net.minecraft.block.Blocks.POWDER_SNOW;
+                state.getBlock() == net.minecraft.block.Blocks.POWDER_SNOW ||
+                state.getBlock() == net.minecraft.block.Blocks.SWEET_BERRY_BUSH;
     }
 }
