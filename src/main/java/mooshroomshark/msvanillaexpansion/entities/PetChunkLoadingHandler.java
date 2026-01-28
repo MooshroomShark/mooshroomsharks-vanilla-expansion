@@ -61,9 +61,24 @@ public class PetChunkLoadingHandler {
                         double distanceSquared = tameable.squaredDistanceTo(tameable.getOwner());
                         double distance = Math.sqrt(distanceSquared);
 
-                        // Check if owner is in a different dimension or far away (>12 blocks)
+                        // Check if we have a pending retry for this pet
+                        int petId = entity.getId();
+                        long currentTick = world.getTime();
+                        Long lastFailedAttempt = failedTeleportCooldowns.get(petId);
+                        boolean hasPendingRetry = lastFailedAttempt != null;
+
+                        // Check if owner is in a different dimension or far away (>12 blocks) OR has pending retry
                         if (tameable.getOwner().getEntityWorld() != world ||
-                                distanceSquared > 144.0) {
+                                distanceSquared > 144.0 || hasPendingRetry) {
+
+                            if (hasPendingRetry) {
+                                MooshroomSharksVanillaExpansion.LOGGER.info(
+                                        "{} has pending retry, distance: {} blocks (distanceSquared: {})",
+                                        entity.getType().getName().getString(),
+                                        (int) distance,
+                                        distanceSquared
+                                );
+                            }
 
                             // Get the chunk position of the pet
                             ChunkPos chunkPos = new ChunkPos(entity.getBlockPos());
@@ -77,13 +92,8 @@ public class PetChunkLoadingHandler {
 
                             petsLoadedChunks++;
 
-                            // If pet is beyond vanilla teleport range (~192 blocks), manually teleport it
-                            if (distanceSquared > 36864.0) { // 192 blocks squared
-                                // Check if we're on cooldown for this pet
-                                int petId = entity.getId();
-                                long currentTick = world.getTime();
-                                Long lastFailedAttempt = failedTeleportCooldowns.get(petId);
-
+                            // If pet is beyond vanilla teleport range (~192 blocks) OR has a pending retry
+                            if (distanceSquared > 36864.0 || hasPendingRetry) { // 192 blocks squared
                                 // Only attempt teleport if not on cooldown or cooldown expired
                                 if (lastFailedAttempt == null || (currentTick - lastFailedAttempt) >= TELEPORT_RETRY_COOLDOWN) {
                                     // Find a safe location near the owner
@@ -127,14 +137,18 @@ public class PetChunkLoadingHandler {
                                                 (int) targetX, (int) targetY, (int) targetZ
                                         );
                                     }
+                                } else {
+                                    // Still on cooldown - log INFO message every 20 ticks (1 second)
+                                    if ((currentTick - lastFailedAttempt) % 20 == 0) {
+                                        long ticksRemaining = TELEPORT_RETRY_COOLDOWN - (currentTick - lastFailedAttempt);
+                                        MooshroomSharksVanillaExpansion.LOGGER.info(
+                                                "{} at {} blocks away, waiting {} ticks before retry teleport attempt (pending retry active)",
+                                                entity.getType().getName().getString(),
+                                                (int) distance,
+                                                ticksRemaining
+                                        );
+                                    }
                                 }
-                            } else {
-                                MooshroomSharksVanillaExpansion.LOGGER.info(
-                                        "Loading chunk for {} at {} (distance from owner: {})",
-                                        entity.getType().getName().getString(),
-                                        chunkPos,
-                                        (int) distance
-                                );
                             }
                         }
                     }
@@ -142,7 +156,7 @@ public class PetChunkLoadingHandler {
             }
         }
 
-        if (petsLoadedChunks > 0) {
+        if (petsLoadedChunks > 0 && world.getTime() % 20 == 0) { // Log every second to reduce spam
             MooshroomSharksVanillaExpansion.LOGGER.info(
                     "Keeping {} chunks loaded for {} pets (found {} total pets, force teleported {})",
                     petChunkTickets.size(), petsLoadedChunks, petsFound, petsTeleported
@@ -152,7 +166,7 @@ public class PetChunkLoadingHandler {
 
     /**
      * Finds a safe location to teleport a pet near the target coordinates.
-     * Checks for solid ground, no suffocation, no lava/fire, and reasonable fall distance.
+     * Checks for solid ground, no suffocation, no lava/fire/water, and reasonable fall distance.
      *
      * @param world The world to search in
      * @param x Target X coordinate
@@ -215,14 +229,19 @@ public class PetChunkLoadingHandler {
             return false;
         }
 
-        // The body space must be passable (air or non-solid)
-        if (bodyState.isSolidBlock(world, pos.up())) {
-            return false; // Would suffocate
+        // Ground must not be waterlogged or have water
+        if (!groundState.getFluidState().isEmpty()) {
+            return false;
         }
 
-        // The head space should be passable
-        if (headState.isSolidBlock(world, pos.up(2))) {
-            return false; // Would suffocate
+        // The body space must be passable (air or non-solid) AND not water
+        if (bodyState.isSolidBlock(world, pos.up()) || !bodyState.getFluidState().isEmpty()) {
+            return false; // Would suffocate or be in water
+        }
+
+        // The head space should be passable AND not water
+        if (headState.isSolidBlock(world, pos.up(2)) || !headState.getFluidState().isEmpty()) {
+            return false; // Would suffocate or head in water
         }
 
         // Check for dangerous blocks
