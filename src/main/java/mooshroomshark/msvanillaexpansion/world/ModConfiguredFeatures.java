@@ -24,9 +24,9 @@ public class ModConfiguredFeatures {
     public static final RegistryKey<ConfiguredFeature<?, ?>> ALTERNATE_OAK_KEY = registerKey("alternateoak");
     public static final RegistryKey<ConfiguredFeature<?, ?>> FLOWER_FOREST_OAK_KEY = registerKey("flowerforestoak");
     public static final RegistryKey<ConfiguredFeature<?, ?>> BIRCH_FOREST_OAK_KEY = registerKey("birchforestoak");
+    public static final RegistryKey<ConfiguredFeature<?, ?>> DEAD_TREE_KEY = registerKey("dead_tree");
 
     //Bedrock Edition features
-    public static final RegistryKey<ConfiguredFeature<?, ?>> DEAD_TREE_KEY = registerKey("dead_tree");
     public static final RegistryKey<ConfiguredFeature<?, ?>> SWAMP_GIANT_RED_MUSHROOM_KEY = registerKey("swamp_giant_red_mushroom");
 
     public static void bootstrap(Registerable<ConfiguredFeature<?, ?>> context) {
@@ -53,7 +53,7 @@ public class ModConfiguredFeatures {
                 new DarkOakFoliagePlacer(ConstantIntProvider.create(0), ConstantIntProvider.create(0)),
                 new TwoLayersFeatureSize(2, 1, 4)).build());
 
-        // dead tree configuration - oak logs without leaves (Bedrock parity)
+        // dead tree configuration - oak logs without leaves
         register(context, DEAD_TREE_KEY, Feature.TREE, new TreeFeatureConfig.Builder(
                 BlockStateProvider.of(Blocks.OAK_LOG),          // Trunk: Oak logs
                 new StraightTrunkPlacer(4, 2, 0),               // Height: 4-6 blocks

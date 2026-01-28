@@ -18,19 +18,13 @@ public class ModTreeGeneration {
         BiomeModifications.addFeature(BiomeSelectors.includeByKey(BiomeKeys.BIRCH_FOREST, BiomeKeys.OLD_GROWTH_BIRCH_FOREST),
                 GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.BIRCH_FOREST_OAK_PLACED_KEY);
 
-        // Bedrock Edition dead trees (oak logs without leaves) - very rare
+        // dead trees (oak logs without leaves) - very rare
         BiomeModifications.addFeature(BiomeSelectors.includeByKey(
                 BiomeKeys.PLAINS,
                 BiomeKeys.SUNFLOWER_PLAINS,
                 BiomeKeys.FOREST,
                 BiomeKeys.FLOWER_FOREST,
-                BiomeKeys.BIRCH_FOREST,
-                BiomeKeys.OLD_GROWTH_BIRCH_FOREST,
                 BiomeKeys.DARK_FOREST,
-                BiomeKeys.TAIGA,
-                BiomeKeys.OLD_GROWTH_PINE_TAIGA,
-                BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA,
-                BiomeKeys.SNOWY_TAIGA,
                 BiomeKeys.SAVANNA,
                 BiomeKeys.WINDSWEPT_SAVANNA
         ), GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.DEAD_TREE_PLACED_KEY);
