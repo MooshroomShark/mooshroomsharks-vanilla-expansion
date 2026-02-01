@@ -3,6 +3,7 @@
   "package": "mooshroomshark.msvanillaexpansion.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "AbstractBoatEntityMixin"
   ],
   "client": [
   ],

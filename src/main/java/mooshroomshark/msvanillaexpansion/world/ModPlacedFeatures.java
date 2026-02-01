@@ -7,6 +7,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.placementmodifier.*;
 
@@ -44,7 +45,7 @@ public class ModPlacedFeatures {
                 configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.DEAD_TREE_KEY),
                 RarityFilterPlacementModifier.of(500),          // 1 in 500 chunks
                 SquarePlacementModifier.of(),                   // Random XZ within chunk
-                PlacedFeatures.MOTION_BLOCKING_HEIGHTMAP,       // Place on ground surface
+                HeightmapPlacementModifier.of(Heightmap.Type.WORLD_SURFACE),    // Place on ground surface
                 BiomePlacementModifier.of()                     // Only in registered biomes
         );
 
@@ -54,7 +55,7 @@ public class ModPlacedFeatures {
                 CountPlacementModifier.of(1),                   // 1 attempt per chunk
                 RarityFilterPlacementModifier.of(50),           // 1 in 50 chunks
                 SquarePlacementModifier.of(),                   // Random XZ within chunk
-                PlacedFeatures.MOTION_BLOCKING_HEIGHTMAP,       // Place on ground surface
+                HeightmapPlacementModifier.of(Heightmap.Type.WORLD_SURFACE),    // Place on ground surface
                 BiomePlacementModifier.of()                     // Only in registered biomes
         );
 
