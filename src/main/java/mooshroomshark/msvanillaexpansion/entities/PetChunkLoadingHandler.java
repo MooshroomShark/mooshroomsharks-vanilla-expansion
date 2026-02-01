@@ -8,6 +8,8 @@ import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.entity.passive.ParrotEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.WolfEntity;
+import net.minecraft.entity.vehicle.BoatEntity;
+import net.minecraft.entity.vehicle.ChestBoatEntity;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
@@ -24,7 +26,10 @@ public class PetChunkLoadingHandler {
 
     // Increased teleport distance thresholds
     private static final double TELEPORT_DISTANCE_SQUARED = 4096.0; // 64 blocks squared
-    private static final double LOAD_CHUNK_DISTANCE_SQUARED = 1024.0; // 32 blocks squared
+
+    // Boat boarding settings
+    private static final double BOAT_BOARDING_DISTANCE_SQUARED = 100.0; // 10 blocks squared
+    private static final Map<Integer, Integer> petLastBoatId = new HashMap<>(); // Track which boat pet was in
 
     // Use the same approach as in your original working code
     private static final ChunkTicketType PET_TICKET = new ChunkTicketType(100L, 100);
@@ -45,6 +50,7 @@ public class PetChunkLoadingHandler {
         int petsFound = 0;
         int petsLoadedChunks = 0;
         int petsTeleported = 0;
+        int petsBoarded = 0;
 
         // Collect pets first to avoid modifying collection while iterating
         List<Entity> petsToProcess = new ArrayList<>();
@@ -88,6 +94,15 @@ public class PetChunkLoadingHandler {
                 }
                 petsLoadedChunks++;
             }
+
+            // NEW: Check if owner is in a boat and pet should board
+            if (handleBoatBoarding(world, entity, tameable, owner, distanceSquared)) {
+                petsBoarded++;
+                continue; // Skip normal teleportation if pet boarded a boat
+            }
+
+            // NEW: Check if pet should exit boat when owner exits
+            handleBoatExiting(entity, owner, petId);
 
             // Try to teleport if very far (more than 64 blocks) or has pending retry
             if (distanceSquared > TELEPORT_DISTANCE_SQUARED || hasPendingRetry) {
@@ -166,33 +181,133 @@ public class PetChunkLoadingHandler {
         // Log status every 5 seconds (debug only)
         if (petsLoadedChunks > 0 && world.getTime() % 100 == 0) {
             MooshroomSharksVanillaExpansion.LOGGER.debug(
-                    "Keeping {} chunks loaded for {} pets (found {} total pets, teleported {} this tick)",
-                    petChunkTickets.size(), petsLoadedChunks, petsFound, petsTeleported
+                    "Keeping {} chunks loaded for {} pets (found {} total pets, teleported {} this tick, boarded {} boats)",
+                    petChunkTickets.size(), petsLoadedChunks, petsFound, petsTeleported, petsBoarded
             );
         }
+    }
+
+    /**
+     * Handles automatic boat boarding for pets when their owner gets in a boat.
+     * Pets will teleport into the back of the boat if they're close enough.
+     *
+     * @return true if the pet boarded a boat, false otherwise
+     */
+    private static boolean handleBoatBoarding(ServerWorld world, Entity petEntity, TameableEntity tameable,
+                                              Entity owner, double distanceSquared) {
+        int petId = petEntity.getId();
+
+        // Check if owner is in a boat
+        Entity ownerVehicle = owner.getVehicle();
+        if (!(ownerVehicle instanceof BoatEntity)) {
+            // Owner not in boat - clear tracking
+            petLastBoatId.remove(petId);
+            return false;
+        }
+
+        BoatEntity boat = (BoatEntity) ownerVehicle;
+        int boatId = boat.getId();
+
+        // Check if pet is already in this boat
+        if (petEntity.getVehicle() == boat) {
+            petLastBoatId.put(petId, boatId);
+            return true; // Already in boat
+        }
+
+        // Check if we've already processed this boat for this pet
+        Integer lastBoat = petLastBoatId.get(petId);
+        if (lastBoat != null && lastBoat == boatId) {
+            // We already tried to board this boat, don't spam attempts
+            return false;
+        }
+
+        // Check if pet is close enough to board (within 10 blocks)
+        if (distanceSquared > BOAT_BOARDING_DISTANCE_SQUARED) {
+            return false;
+        }
+
+        // Check if boat has room
+        // Regular boats have 2 passenger slots (indices 0 and 1)
+        // Chest boats only have 1 passenger slot (index 0) since the chest takes up the back
+        boolean isChestBoat = ownerVehicle instanceof ChestBoatEntity;
+        int maxPassengers = isChestBoat ? 1 : 2;
+
+        List<Entity> passengers = boat.getPassengerList();
+        if (passengers.size() >= maxPassengers) {
+            // Boat is full
+            MooshroomSharksVanillaExpansion.LOGGER.debug(
+                    "Cannot board {} to boat - boat is full ({}/{})",
+                    petEntity.getType().getName().getString(),
+                    passengers.size(),
+                    maxPassengers
+            );
+            return false;
+        }
+
+        // Board the pet!
+        boolean success = petEntity.startRiding(boat);
+
+        if (success) {
+            petLastBoatId.put(petId, boatId);
+            MooshroomSharksVanillaExpansion.LOGGER.info(
+                    "Boarded {} into owner's boat (type: {})",
+                    petEntity.getType().getName().getString(),
+                    isChestBoat ? "chest boat" : "regular boat"
+            );
+        } else {
+            MooshroomSharksVanillaExpansion.LOGGER.warn(
+                    "Failed to board {} into boat",
+                    petEntity.getType().getName().getString()
+            );
+        }
+
+        return success;
+    }
+
+    /**
+     * Handles automatic boat exiting for pets when their owner exits a boat.
+     * Pets will dismount from boats when their owner is no longer in a boat.
+     */
+    private static void handleBoatExiting(Entity petEntity, Entity owner, int petId) {
+        Entity petVehicle = petEntity.getVehicle();
+
+        // Check if pet is in a boat
+        if (!(petVehicle instanceof BoatEntity)) {
+            return; // Pet not in a boat, nothing to do
+        }
+
+        // Check if owner is still in a boat
+        Entity ownerVehicle = owner.getVehicle();
+        if (ownerVehicle instanceof BoatEntity) {
+            return; // Owner still in boat, pet should stay
+        }
+
+        // Owner has exited the boat, so pet should exit too
+        petEntity.stopRiding();
+        petLastBoatId.remove(petId); // Clear tracking
+
+        MooshroomSharksVanillaExpansion.LOGGER.info(
+                "{} exited boat because owner left",
+                petEntity.getType().getName().getString()
+        );
     }
 
     private static BlockPos findSafeTeleportLocation(ServerWorld world, double x, double y, double z, boolean ownerInWater) {
         BlockPos targetPos = BlockPos.ofFloored(x, y, z);
 
-        // STRATEGY 1: Find surface position at player's location
+        // STRATEGY 1: Try the exact position first
+        if (isSafeTeleportLocation(world, targetPos, ownerInWater)) {
+            return targetPos;
+        }
+
+        // STRATEGY 2: Try finding surface position
         BlockPos surfacePos = findSurfacePosition(world, targetPos);
         if (surfacePos != null && isSafeTeleportLocation(world, surfacePos, ownerInWater)) {
             return surfacePos;
         }
 
-        // STRATEGY 2: If owner is in water, try positions in water first
-        if (ownerInWater) {
-            for (int yOffset = -2; yOffset <= 2; yOffset++) {
-                BlockPos waterPos = targetPos.add(0, yOffset, 0);
-                if (isSafeTeleportLocation(world, waterPos, ownerInWater)) {
-                    return waterPos;
-                }
-            }
-        }
-
-        // STRATEGY 3: Look for safe ground around player (horizontal search)
-        for (int radius = 1; radius <= 8; radius++) {
+        // STRATEGY 3: Try nearby positions in a small radius
+        for (int radius = 1; radius <= 3; radius++) {
             for (int xOffset = -radius; xOffset <= radius; xOffset++) {
                 for (int zOffset = -radius; zOffset <= radius; zOffset++) {
                     BlockPos checkPos = findSurfacePosition(world, targetPos.add(xOffset, 0, zOffset));

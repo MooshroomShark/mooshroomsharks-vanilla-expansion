@@ -15,9 +15,13 @@ import net.minecraft.world.gen.feature.HugeMushroomFeatureConfig;
 import net.minecraft.world.gen.feature.size.TwoLayersFeatureSize;
 import net.minecraft.world.gen.foliage.*;
 import net.minecraft.world.gen.stateprovider.BlockStateProvider;
+import net.minecraft.world.gen.treedecorator.BeehiveTreeDecorator;
+import net.minecraft.world.gen.treedecorator.TrunkVineTreeDecorator;
 import net.minecraft.world.gen.trunk.DarkOakTrunkPlacer;
 import net.minecraft.world.gen.trunk.ForkingTrunkPlacer;
 import net.minecraft.world.gen.trunk.StraightTrunkPlacer;
+
+import java.util.List;
 
 public class ModConfiguredFeatures {
     //oak tree variants
@@ -25,6 +29,7 @@ public class ModConfiguredFeatures {
     public static final RegistryKey<ConfiguredFeature<?, ?>> FLOWER_FOREST_OAK_KEY = registerKey("flowerforestoak");
     public static final RegistryKey<ConfiguredFeature<?, ?>> BIRCH_FOREST_OAK_KEY = registerKey("birchforestoak");
     public static final RegistryKey<ConfiguredFeature<?, ?>> DEAD_TREE_KEY = registerKey("dead_tree");
+    public static final RegistryKey<ConfiguredFeature<?, ?>> DYING_OAK_KEY = registerKey("dyingoak");
 
     //Bedrock Edition features
     public static final RegistryKey<ConfiguredFeature<?, ?>> SWAMP_GIANT_RED_MUSHROOM_KEY = registerKey("swamp_giant_red_mushroom");
@@ -73,6 +78,20 @@ public class ModConfiguredFeatures {
                         BlockStateProvider.of(Blocks.MUSHROOM_STEM.getDefaultState()),       // Stem
                         2                                                                      // Cap radius
                 ));
+
+        //dying tree (modeled off of Bedrock)
+        register(context, DYING_OAK_KEY, Feature.TREE, new TreeFeatureConfig.Builder(
+                BlockStateProvider.of(Blocks.OAK_LOG),
+                new StraightTrunkPlacer(4, 2, 0),
+                BlockStateProvider.of(Blocks.OAK_LEAVES),
+                new BlobFoliagePlacer(ConstantIntProvider.create(2), ConstantIntProvider.create(0), 3),
+                new TwoLayersFeatureSize(1, 0, 1))
+                .decorators(List.of(
+                        new TrunkVineTreeDecorator(),
+                        new BeehiveTreeDecorator(0.05f)
+                ))
+                .build());
+
     }
 
     public static RegistryKey<ConfiguredFeature<?, ?>> registerKey(String name) {

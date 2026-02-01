@@ -34,5 +34,23 @@ public class ModTreeGeneration {
                 BiomeKeys.SWAMP,
                 BiomeKeys.MANGROVE_SWAMP
         ), GenerationStep.Feature.VEGETAL_DECORATION, ModPlacedFeatures.SWAMP_GIANT_RED_MUSHROOM_PLACED_KEY);
+
+        // dying oak tree (like Bedrock edition)
+        BiomeModifications.addFeature(BiomeSelectors.includeByKey(
+                        BiomeKeys.FOREST,
+                        BiomeKeys.FLOWER_FOREST,
+                        BiomeKeys.PLAINS,
+                        BiomeKeys.SUNFLOWER_PLAINS,
+                        BiomeKeys.SWAMP,
+                        BiomeKeys.MANGROVE_SWAMP,
+                        BiomeKeys.DARK_FOREST,
+                        BiomeKeys.BIRCH_FOREST,
+                        BiomeKeys.OLD_GROWTH_BIRCH_FOREST,
+                        BiomeKeys.JUNGLE,
+                        BiomeKeys.SPARSE_JUNGLE,
+                        BiomeKeys.BAMBOO_JUNGLE
+                ),
+                GenerationStep.Feature.VEGETAL_DECORATION,
+                ModPlacedFeatures.DYING_OAK_PLACED_KEY);
     }
 }
