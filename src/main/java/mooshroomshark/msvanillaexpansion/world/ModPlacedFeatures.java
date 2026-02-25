@@ -45,7 +45,7 @@ public class ModPlacedFeatures {
                 configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.DEAD_TREE_KEY),
                 RarityFilterPlacementModifier.of(500),          // 1 in 500 chunks
                 SquarePlacementModifier.of(),                   // Random XZ within chunk
-                HeightmapPlacementModifier.of(Heightmap.Type.WORLD_SURFACE),    // Place on ground surface
+                HeightmapPlacementModifier.of(Heightmap.Type.OCEAN_FLOOR),    // Place on ground surface
                 BiomePlacementModifier.of()                     // Only in registered biomes
         );
 
