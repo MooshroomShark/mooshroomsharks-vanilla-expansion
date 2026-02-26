@@ -43,11 +43,8 @@ public class ModPlacedFeatures {
         // dead tree placement - very rare (1 in 500 chunks)
         register(context, DEAD_TREE_PLACED_KEY,
                 configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.DEAD_TREE_KEY),
-                RarityFilterPlacementModifier.of(500),          // 1 in 500 chunks
-                SquarePlacementModifier.of(),                   // Random XZ within chunk
-                HeightmapPlacementModifier.of(Heightmap.Type.OCEAN_FLOOR),    // Place on ground surface
-                BiomePlacementModifier.of()                     // Only in registered biomes
-        );
+                VegetationPlacedFeatures.treeModifiersWithWouldSurvive(
+                        PlacedFeatures.createCountExtraModifier(0, 1.0f / 500f, 1), Blocks.OAK_SAPLING));
 
         // giant red mushroom placement - moderately rare (1 in 50 chunks) to match Bedrock Edition
         register(context, SWAMP_GIANT_RED_MUSHROOM_PLACED_KEY,
