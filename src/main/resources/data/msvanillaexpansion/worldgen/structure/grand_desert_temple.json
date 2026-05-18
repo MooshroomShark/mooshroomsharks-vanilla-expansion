@@ -3,13 +3,13 @@
   "biomes": "#msvanillaexpansion:has_structure/grand_desert_temple_biomes",
   "step": "surface_structures",
   "spawn_overrides": {},
-  "terrain_adaptation": "beard_thin",
+  "terrain_adaptation": "none",
   "start_pool": "msvanillaexpansion:grand_desert_temple",
-  "size": 1,
+  "size": 2,
   "start_height": {
     "absolute": 0
   },
   "project_start_to_heightmap": "WORLD_SURFACE_WG",
-  "max_distance_from_center": 80,
-  "use_expansion_hack": false
+  "max_distance_from_center": 116,
+  "use_expansion_hack": true
 }
